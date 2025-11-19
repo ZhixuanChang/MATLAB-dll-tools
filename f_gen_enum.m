@@ -14,6 +14,16 @@ for i = 1: length(file_list)
     file_fullpath = [file.folder, filesep, file.name];
     data_str = fileread(file_fullpath);
 
+    % remove comments
+    while contains(data_str, '//')
+        pos = strfind(data_str, '//');
+        part1 = data_str(1:pos(1)-1);
+        part2 = data_str(pos(1)+2:end);
+        pos = strfind(part2, sprintf('\n'));
+        part2 = part2(pos(1)+1:end);
+        data_str = [part1, part2];
+    end
+
     str_residual = data_str;
     while contains(str_residual, 'enum')
         tmp = strsplit(str_residual, 'enum');
@@ -60,7 +70,6 @@ for i = 1: length(file_list)
         fprintf(fid, '%s', file_contents);
         fclose(fid);
     end
-    return
 end
 
 end
