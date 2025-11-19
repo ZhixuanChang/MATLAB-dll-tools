@@ -20,16 +20,23 @@ for i = 1: length(file_list)
         part1 = data_str(1:pos(1)-1);
         part2 = data_str(pos(1)+2:end);
         pos = strfind(part2, sprintf('\n'));
-        part2 = part2(pos(1)+1:end);
-        data_str = [part1, part2];
+        if isempty(pos)
+            % there is nothing behind the comments
+            data_str = part1;
+        else
+            part2 = part2(pos(1)+1:end);
+            data_str = [part1, part2];
+        end
     end
 
     str_residual = data_str;
     while contains(str_residual, 'enum')
-        tmp = strsplit(str_residual, 'enum');
-        tmp = strsplit(tmp{2}, ';');
-        str_residual = tmp{2};
-        tmp = strsplit(tmp{1}, '{');
+        pos = strfind(str_residual, 'enum');
+        str_residual = str_residual(pos(1)+4:end);
+        pos = strfind(str_residual, ';');
+        cur_enum = str_residual(1:pos(1)-1);
+        str_residual = str_residual(pos(1)+1:end);
+        tmp = strsplit(cur_enum, '{');
         tmp = strsplit(tmp{2}, '}');
         enum_name = regexprep(tmp{2}, '[^a-zA-Z0-9_]', '');
         member_list = strsplit(tmp{1}, ',');
@@ -41,6 +48,10 @@ for i = 1: length(file_list)
                 member_value = int32(str2double(tmp{2}));
             else
                 member_name = regexprep(member_list{j}, '[^a-zA-Z0-9_]', '');
+                if isempty(member_name)
+                    % for the last enumeration variable definition in the C source code ended with a comma
+                    continue;
+                end
                 if j == 1
                     member_value = 0;
                 else
