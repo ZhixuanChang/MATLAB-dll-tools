@@ -1,4 +1,4 @@
-function f_gen_enum(s_path, d_path)
+function generateEnumDefs(s_path, d_path)
 % This function will recursively scan the specified path and generate MATLAB enumeration class definition for each enum
 % type in C/C++ head files.
 
@@ -11,23 +11,24 @@ end
 
 for i = 1: length(file_list)
     file = file_list(i);
-    file_fullpath = [file.folder, filesep, file.name];
+    file_fullpath = fullfile(file.folder, file.name);
     data_str = fileread(file_fullpath);
 
     % remove comments
-    while contains(data_str, '//')
-        pos = strfind(data_str, '//');
-        part1 = data_str(1:pos(1)-1);
-        part2 = data_str(pos(1)+2:end);
-        pos = strfind(part2, sprintf('\n'));
-        if isempty(pos)
-            % there is nothing behind the comments
-            data_str = part1;
-        else
-            part2 = part2(pos(1)+1:end);
-            data_str = [part1, part2];
-        end
-    end
+    data_str = removeComments(data_str);
+    % while contains(data_str, '//')
+    %     pos = strfind(data_str, '//');
+    %     part1 = data_str(1:pos(1)-1);
+    %     part2 = data_str(pos(1)+2:end);
+    %     pos = strfind(part2, sprintf('\n'));
+    %     if isempty(pos)
+    %         % there is nothing behind the comments
+    %         data_str = part1;
+    %     else
+    %         part2 = part2(pos(1)+1:end);
+    %         data_str = [part1, part2];
+    %     end
+    % end
 
     str_residual = data_str;
     while contains(str_residual, 'enum')
@@ -44,10 +45,10 @@ for i = 1: length(file_list)
         for j = 1 : length(member_list)
             if contains(member_list{j}, '=')
                 tmp = strsplit(member_list{j}, '=');
-                member_name = regexprep(tmp{1}, '[^a-zA-Z0-9_]', '');
+                member_name = cleanVarName(tmp{1});
                 member_value = int32(str2double(tmp{2}));
             else
-                member_name = regexprep(member_list{j}, '[^a-zA-Z0-9_]', '');
+                member_name = cleanVarName(member_list{j});
                 if isempty(member_name)
                     % for the last enumeration variable definition in the C source code ended with a comma
                     continue;
